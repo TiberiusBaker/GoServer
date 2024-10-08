@@ -2,10 +2,14 @@ package models
 
 import "context"
 
-type contextKey string
+type ContextKey string
 
-var GameKey = contextKey("game")
+var GameKey = ContextKey("game")
+var GameIdKey = ContextKey("gameId")
 
-func GetGame(ctx context.Context) *Game {
-	return ctx.Value(GameKey).(*Game)
+var ConsoleKey = ContextKey("console")
+var ConsoleIdKey = ContextKey("consoleId")
+
+func GetFromContext[T any](ctx context.Context, key ContextKey) (T) {
+    return ctx.Value(key).(T)
 }
