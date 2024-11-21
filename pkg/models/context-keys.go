@@ -10,6 +10,6 @@ var GameIdKey = ContextKey("gameId")
 var ConsoleKey = ContextKey("console")
 var ConsoleIdKey = ContextKey("consoleId")
 
-func GetFromContext[T any](ctx context.Context, key ContextKey) (T) {
-    return ctx.Value(key).(T)
+func GetFromContext[T any](ctx context.Context, key ContextKey) T {
+	return ctx.Value(key).(T)
 }

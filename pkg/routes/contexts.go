@@ -14,7 +14,7 @@ func GameBodyCtx(next http.Handler) http.Handler {
 		err := utils.ParseBody(r, game)
 		if err != nil {
 			http.Error(w, err.Error(), 400)
-			return 
+			return
 		}
 		ctx := context.WithValue(r.Context(), models.GameKey, game)
 		next.ServeHTTP(w, r.WithContext(ctx))

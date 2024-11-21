@@ -10,10 +10,29 @@ import (
 var CreateConsole = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	console := models.GetFromContext[*models.Console](r.Context(), models.ConsoleKey)
 	return console.CreateConsole(), nil
-})
+}, http.StatusCreated)
 
 var GetConsoleFromId = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	console := &models.Console{}
+	return getConsole(r)
+}, http.StatusOK)
+
+func getConsole(r *http.Request) (interface{}, error) {
 	consoleId := models.GetFromContext[string](r.Context(), models.ConsoleIdKey)
-	return console.GetConsoleFromId(consoleId)
-})
+	return models.GetFromId(consoleId, &models.Console{})
+}
+
+var DeleteConsole = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+	consoleId := models.GetFromContext[string](r.Context(), models.ConsoleIdKey)
+	return models.Delete(consoleId, &models.Console{}) 
+}, http.StatusOK)
+
+var AddGameRelation = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+	consoleId := models.GetFromContext[string](r.Context(), models.ConsoleIdKey)
+	console := &models.Console{}
+	if _, err := models.GetFromId(consoleId, &console); err != nil {
+		return nil, err
+	}
+	game := models.GetFromContext[*models.Game](r.Context(), models.GameKey)
+	return console.AddGame(game.ID)
+}, http.StatusOK)
+

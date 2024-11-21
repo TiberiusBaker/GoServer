@@ -11,19 +11,21 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func JsonReturn(f func(w http.ResponseWriter, r *http.Request) (interface{}, error)) func(w http.ResponseWriter, r *http.Request) {
+func JsonReturn(f func(w http.ResponseWriter, r *http.Request) (interface{}, error), success int) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, err := f(w, r)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		response, err := json.Marshal(res)
 		if err != nil {
-			http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
+			http.Error(w, "Failed to marshal JSON: " + err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+		success = http.StatusOK
+		w.WriteHeader(success)
 		w.Write(response)
 	}
 }

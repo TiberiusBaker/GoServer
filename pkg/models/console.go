@@ -20,17 +20,31 @@ func (c *Console) CreateConsole() *Console {
 	result := db.Create(&c)
 
 	if result.Error != nil {
-        fmt.Println("Error creating console:", result.Error)
-    } else {
-        fmt.Println("Game inserted successfully with ID:", c.ID)
-    }
+		fmt.Println("Error creating console:", result.Error)
+	} else {
+		fmt.Println("Game inserted successfully with ID:", c.ID)
+	}
 	return c
 }
 
-func (c *Console) GetConsoleFromId(consoleId string) (*Console, error) {
-	db := config.GetDB()
-	if err := db.Where("ID = ?", consoleId).First(&c).Error; err != nil {
-		return nil, fmt.Errorf("No such console for id " + consoleId)
+func (console *Console) getGameAssociation() *gorm.Association {
+	return config.GetDB().Model(&console).Association("Games")
+}
+
+func (console *Console) doGameAssociationAction(gameId interface{}, action AssociationAction) (*Game, error) {
+	game := &Game{}
+	if _, err := GetFromId(gameId, game); err != nil {
+		return nil, err
 	}
-	return c, nil
+	if err := action(console.getGameAssociation(), game); err != nil {
+		return nil, err
+	}
+	return game, nil
+}
+
+
+func (console *Console) AddGame (gameId interface{}) (*Game, error) {
+	return console.doGameAssociationAction(gameId, func(association *gorm.Association, game interface{}) error {
+		return association.Append(game)
+	})
 }
