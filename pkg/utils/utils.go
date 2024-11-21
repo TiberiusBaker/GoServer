@@ -11,9 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func JsonReturn(f func(w http.ResponseWriter, r *http.Request) (interface{}, error), success int) func(w http.ResponseWriter, r *http.Request) {
+func JsonReturn(f func(r *http.Request) (interface{}, error), success int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := f(w, r)
+		res, err := f(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

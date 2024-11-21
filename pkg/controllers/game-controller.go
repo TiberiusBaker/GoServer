@@ -7,44 +7,53 @@ import (
 	"github.com/TiberiusBaker/GoServer/pkg/utils"
 )
 
-var CreateGame = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	game := models.GetFromContext[*models.Game](r.Context(), models.GameKey)
-	return game.CreateGame()
+//------------------PATHS-------------------------
+var CreateGame = utils.JsonReturn(func(r *http.Request) (interface{}, error) {
+	return ExtractGame(r).CreateGame()
 }, http.StatusCreated)
 
-var DeleteGame = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	gameId := models.GetFromContext[string](r.Context(), models.GameIdKey)
-	return models.Delete(gameId, &models.Game{})
-}, http.StatusOK)
-
-var GetGameFromId = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	gameId := models.GetFromContext[string](r.Context(), models.GameIdKey)
-	return models.GetFromId(gameId, &models.Game{})
-}, http.StatusOK)
-
-var GetGameConsoles = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+var DeleteGame = utils.JsonReturn(func(r *http.Request) (interface{}, error) {
 	game := models.Game{}
-	gameId := models.GetFromContext[string](r.Context(), models.GameIdKey)
-	return game.GetConsoles(gameId)
+	return game.Delete(ExtractGameId(r))
 }, http.StatusOK)
 
-var AddConsoleRelation = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+var GetGameFromId = utils.JsonReturn(func(r *http.Request) (interface{}, error) {
+	game := &models.Game{}
+	return game.GetFromId(ExtractGameId(r))
+}, http.StatusOK)
+
+var GetGameConsoles = utils.JsonReturn(func(r *http.Request) (interface{}, error) {
 	game := models.Game{}
-	gameId := models.GetFromContext[string](r.Context(), models.GameIdKey)
-	if _, err := models.GetFromId(gameId, &game); err != nil {
+	if _, err := game.GetFromId(ExtractGameId(r)); err != nil {
 		return nil, err
 	}
-	console := models.GetFromContext[*models.Console](r.Context(), models.ConsoleKey)
-	return game.AddConsole(console.ID)
+	return game.GetConsoles()
 }, http.StatusOK)
 
-var DeleteConsoleRelation = utils.JsonReturn(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	game := models.Game{}
-	gameId := models.GetFromContext[string](r.Context(), models.GameIdKey)
-	if _, err := models.GetFromId(gameId, &game); err != nil {
+var AddConsoleRelation = utils.JsonReturn(func(r *http.Request) (interface{}, error) {
+	game := &models.Game{}
+	if _, err := game.GetFromId(ExtractGameId(r)); err != nil {
 		return nil, err
 	}
-	console := models.GetFromContext[*models.Console](r.Context(), models.ConsoleKey)
-	return game.DeleteConsole(console.ID)
+	console := ExtractConsole(r)
+	return game.AddConsoleRel(console.ID)
 }, http.StatusOK)
+
+var DeleteConsoleRelation = utils.JsonReturn(func(r *http.Request) (interface{}, error) {
+	game := &models.Game{}
+	if _, err := game.GetFromId(ExtractGameId(r)); err != nil {
+		return nil, err
+	}
+	console := ExtractConsole(r)
+	return game.DeleteConsoleRel(console.ID)
+}, http.StatusOK)
+
+//-----------------HELPERS-----------------------------
+func ExtractGameId(r *http.Request) string {
+	return models.GetFromContext[string](r.Context(), models.GameIdKey)
+}
+
+func ExtractGame(r *http.Request) *models.Game {
+	return models.GetFromContext[*models.Game](r.Context(), models.GameKey)
+}
 

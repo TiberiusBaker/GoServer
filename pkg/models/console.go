@@ -15,25 +15,34 @@ type Console struct {
 	Games          []Game `gorm:"many2many:game_consoles;" json:"games"`
 }
 
-func (c *Console) CreateConsole() *Console {
+func (console *Console) Delete(id interface{}) (*Console, error) {
 	db := config.GetDB()
-	result := db.Create(&c)
-
-	if result.Error != nil {
-		fmt.Println("Error creating console:", result.Error)
-	} else {
-		fmt.Println("Game inserted successfully with ID:", c.ID)
+	if err := db.Delete(&console, id).Error; err != nil {
+		return nil, err
 	}
-	return c
+	return console, nil
 }
 
-func (console *Console) getGameAssociation() *gorm.Association {
-	return config.GetDB().Model(&console).Association("Games")
+func (console *Console) GetFromId(id interface{}) (*Console, error) {
+	db := config.GetDB()
+	if err := db.Where("ID = ?", id).Limit(1).First(&console).Error; err != nil {
+		return nil, fmt.Errorf("No item found for id: %s, %w", id, err)
+	}
+	return console, nil
+}
+
+func (c *Console) CreateConsole() (*Console, error) {
+	db := config.GetDB()
+	if err := db.Create(&c).Error; err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 func (console *Console) doGameAssociationAction(gameId interface{}, action AssociationAction) (*Game, error) {
-	game := &Game{}
-	if _, err := GetFromId(gameId, game); err != nil {
+	gameItem := Game{}
+	game, err := gameItem.GetFromId(gameId)
+	if err != nil {
 		return nil, err
 	}
 	if err := action(console.getGameAssociation(), game); err != nil {
@@ -42,9 +51,27 @@ func (console *Console) doGameAssociationAction(gameId interface{}, action Assoc
 	return game, nil
 }
 
-
-func (console *Console) AddGame (gameId interface{}) (*Game, error) {
+func (console *Console) AddGameRel(gameId interface{}) (*Game, error) {
 	return console.doGameAssociationAction(gameId, func(association *gorm.Association, game interface{}) error {
 		return association.Append(game)
 	})
+}
+
+func (console *Console) DeleteGameRel(gameId interface{}) (*Game, error) {
+	return console.doGameAssociationAction(gameId, func(association *gorm.Association, game interface{}) error {
+		return association.Delete(game)
+	})
+}
+
+func (console *Console) GetGames() (*[]Game, error) {
+	var games []Game
+	if err := console.getGameAssociation().Find(&games); err != nil {
+		return nil, err
+	}
+	return &games, nil
+}
+
+//-----------------------HELPERS----------------------
+func (console *Console) getGameAssociation() *gorm.Association {
+	return config.GetDB().Model(&console).Association("Games")
 }

@@ -37,9 +37,9 @@ var RegisterRoutes = func(router *chi.Mux) {
 			r.Delete("/", controllers.DeleteConsole)
 
 			r.Route("/games", func(r chi.Router) {
-				//r.Get("/", controllers.GetConsoleGames)
+				r.Get("/", controllers.GetConsoleGames)
 				r.With(GameBodyCtx).Post("/", controllers.AddGameRelation)
-				//r.With(GameBodyCtx).Delete("/", controllers.DeleteGameRelation)
+				r.With(GameBodyCtx).Delete("/", controllers.DeleteGameRelation)
 			})
 
 		})
